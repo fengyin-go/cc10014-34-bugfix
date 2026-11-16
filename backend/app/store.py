@@ -14,12 +14,19 @@ class Store:
         self._tables: dict[str, list[dict[str, Any]]] = {
             name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
         }
+        self._sequences: dict[str, int] = {}
 
     def module_names(self) -> list[str]:
         return sorted(self._tables)
 
     def rows(self, module: str) -> list[dict[str, Any]]:
         return self._tables.setdefault(module, [])
+
+    def next_sequence(self, name: str, *, minimum: int = 1) -> int:
+        """生成单调递增的流水号；``minimum`` 由调用方按现存数据算成下一个可用号。"""
+        current = max(self._sequences.get(name, 0), minimum)
+        self._sequences[name] = current + 1
+        return current
 
     def find(self, module: str, entry_id: int) -> dict[str, Any] | None:
         for row in self.rows(module):
